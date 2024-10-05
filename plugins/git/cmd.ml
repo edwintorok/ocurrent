@@ -3,6 +3,7 @@ open Lwt.Infix
 type clone_config =
 { filter: [`Blobless] option
 ; only_branch: bool
+; features: string list
 }
 
 module Metrics = struct
@@ -68,8 +69,10 @@ let git_clone ~clone_config ~cancellable ~job ~src dst =
       | None -> filters
       | Some `Blobless -> "--filter=blob:none" :: filters
     in
+    let features = List.map (Printf.sprintf "feature.%s=true") clone_config.features in
+    let features = List.concat_map (fun feat -> ["-c"; feat]) features in
     (* features and filters must be after 'clone', otherwise they don't persist in .git/config *)
-    git ~config ~cancellable ~job ("clone" :: filters @ [ "--recursive"; "-q"; src; Fpath.to_string dst])
+    git ~config ~cancellable ~job ("clone" :: features @ filters @ [ "--recursive"; "-q"; src; Fpath.to_string dst])
 
 let git_fetch ?recurse_submodules ~cancellable ~job ~src ~dst gref =
   Prometheus.Counter.inc_one (Metrics.download_events "fetch");
