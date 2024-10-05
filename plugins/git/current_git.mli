@@ -1,5 +1,28 @@
 (** Integration with Git. *)
 
+(** [git clone] configuration options.
+  [git] will persist these in [.git/config], so subsequent fetches and other operations
+  on the repository will also use these.
+  Some of these settings are suitable for a CI (e.g. blobless clones), but not for a developer
+  (e.g. they slow down [git blame]), so they have to be set per-repository,
+  and cannot be set in the global [git] config.
+ *)
+type clone_config =
+{ filter: [`Blobless] option (** use --filter=blob:none for a blobless clone/fetch *)
+}
+
+(** git's default configuration *)
+val empty_config: clone_config
+
+(** git configuration values optimized for clone/fetch speed.
+    May break compatibility with older versions of [git], or 3rdparty
+    [git] implementations. *)
+val fast_config: clone_config
+
+(** this plugin's default configuration.
+  Currently equivalent to {!val:empty_config}. *)
+val default_config: clone_config
+
 module Commit_id : sig
   include Set.OrderedType
 
@@ -41,10 +64,10 @@ module Commit : sig
   val unmarshal : string -> t
 end
 
-val clone : schedule:Current_cache.Schedule.t -> ?gref:string -> string -> Commit.t Current.t
-(** [clone ~schedule ~gref uri] evaluates to the head commit of [uri]'s [gref] branch (default: "master"). *)
+val clone : ?clone_config:clone_config -> schedule:Current_cache.Schedule.t -> ?gref:string -> string -> Commit.t Current.t
+(** [clone ?clone_config ~schedule ~gref uri] evaluates to the head commit of [uri]'s [gref] branch (default: "master"). *)
 
-val fetch : Commit_id.t Current.t -> Commit.t Current.t
+val fetch : ?clone_config:clone_config -> Commit_id.t Current.t -> Commit.t Current.t
 
 val with_checkout :
   ?pool:unit Current.Pool.t ->

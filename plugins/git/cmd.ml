@@ -1,5 +1,9 @@
 open Lwt.Infix
 
+type clone_config =
+{ filter: [`Blobless] option
+}
+
 module Metrics = struct
   open Prometheus
 
@@ -54,10 +58,16 @@ let git ~cancellable ~job ?cwd ?config args =
     be set to make sure we can update the submodules.
 
     Cf: https://git-scm.com/docs/git-config#Documentation/git-config.txt-protocolallow *)
-let git_clone ~cancellable ~job ~src dst =
+let git_clone ~clone_config ~cancellable ~job ~src dst =
     Prometheus.Counter.inc_one (Metrics.download_events "clone");
     let config = [ "protocol.file.allow=always" ] in
-    git ~config ~cancellable ~job ["clone"; "--recursive"; "-q"; src; Fpath.to_string dst]
+    let filters = [] in
+    let filters = match clone_config.filter with
+      | None -> filters
+      | Some `Blobless -> "--filter=blob:none" :: filters
+    in
+    (* features and filters must be after 'clone', otherwise they don't persist in .git/config *)
+    git ~config ~cancellable ~job ("clone" :: filters @ [ "--recursive"; "-q"; src; Fpath.to_string dst])
 
 let git_fetch ?recurse_submodules ~cancellable ~job ~src ~dst gref =
   Prometheus.Counter.inc_one (Metrics.download_events "fetch");

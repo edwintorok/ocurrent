@@ -12,14 +12,25 @@ let ( >>!= ) x f =
   | Ok y -> f y
   | Error _ as e -> Lwt.return e
 
+type clone_config = Cmd.clone_config =
+{ filter: [`Blobless] option
+}
+
+let empty_config = {filter = None}
+
+let fast_config = { filter = Some `Blobless}
+
+(* for backwards compatibility do not enable these by default yet *)
+let default_config = empty_config
+
 module Fetch = struct
-  type t = No_context
+  type t = clone_config
   module Key = Commit_id
   module Value = Commit
 
   let id = "git-fetch"
 
-  let build No_context job key =
+  let build clone_config job key =
     let { Commit_id.repo = remote_repo; gref; hash = _ } = key in
     let level =
       if Commit_id.is_local key then Current.Level.Harmless
@@ -31,7 +42,7 @@ module Fetch = struct
     (* Ensure we have a local clone of the repository. *)
     begin
       if Cmd.dir_exists local_repo then Lwt.return (Ok ())
-      else Cmd.git_clone ~cancellable:true ~job ~src:remote_repo local_repo
+      else Cmd.git_clone ~clone_config ~cancellable:true ~job ~src:remote_repo local_repo
     end >>!= fun () ->
     let commit = { Commit.repo = local_repo; id = key } in
     (* Fetch the commit (if missing). *)
@@ -66,17 +77,17 @@ end
 
 module Fetch_cache = Current_cache.Make(Fetch)
 
-let fetch cid =
+let fetch ?(clone_config=default_config) cid =
   Current.component "fetch" |>
   let> cid = cid in
-  Fetch_cache.get Fetch.No_context cid
+  Fetch_cache.get clone_config cid
 
 module Clone_cache = Current_cache.Make(Clone)
 
-let clone ~schedule ?(gref="master") repo =
+let clone ?(clone_config=default_config) ~schedule ?(gref="master") repo =
   Current.component "clone@ %s@ %s" repo gref |>
   let> () = Current.return () in
-  Clone_cache.get ~schedule Clone.No_context { Clone.Key.repo; gref }
+  Clone_cache.get ~schedule clone_config { Clone.Key.repo; gref }
 
 let with_checkout ?pool ~job commit fn =
   let { Commit.repo; id } = commit in
