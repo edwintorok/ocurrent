@@ -4,6 +4,7 @@ type clone_config =
 { filter: [`Blobless] option
 ; only_branch: bool
 ; features: string list
+; disable_reflog: bool
 }
 
 module Metrics = struct
@@ -70,6 +71,7 @@ let git_clone ~clone_config ~cancellable ~job ~src dst =
       | Some `Blobless -> "--filter=blob:none" :: filters
     in
     let features = List.map (Printf.sprintf "feature.%s=true") clone_config.features in
+    let features = if clone_config.disable_reflog then ("core.logAllRefUpdates=false" :: features) else features in
     let features = List.concat_map (fun feat -> ["-c"; feat]) features in
     (* features and filters must be after 'clone', otherwise they don't persist in .git/config *)
     git ~config ~cancellable ~job ("clone" :: features @ filters @ [ "--recursive"; "-q"; src; Fpath.to_string dst])

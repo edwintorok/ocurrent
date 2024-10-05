@@ -11,6 +11,7 @@ type clone_config =
 { filter: [`Blobless] option (** use --filter=blob:none for a blobless clone/fetch *)
 ; only_branch: bool (** enables [--single-branch] and [--no-tags] *)
 ; features: string list (** enable git {{:https://git-scm.com/docs/git-config#Documentation/git-config.txt-feature}features} *)
+; disable_reflog: bool (** disables the {{:https://git-scm.com/docs/git-config#Documentation/git-config.txt-corelogAllRefUpdates}reflog} *)
 }
 
 (** git's default configuration *)

@@ -16,11 +16,12 @@ type clone_config = Cmd.clone_config =
 { filter: [`Blobless] option
 ; only_branch: bool
 ; features: string list
+; disable_reflog: bool
 }
 
-let empty_config = {filter = None; features = []; only_branch = false}
+let empty_config = {filter = None; features = []; only_branch = false; disable_reflog = false}
 
-let fast_config = { filter = Some `Blobless; features = ["manyFiles"]; only_branch = true }
+let fast_config = { filter = Some `Blobless; features = ["manyFiles"]; only_branch = true; disable_reflog=true }
 
 (* for backwards compatibility do not enable these by default yet *)
 let default_config = empty_config
