@@ -9,6 +9,7 @@
  *)
 type clone_config =
 { filter: [`Blobless] option (** use --filter=blob:none for a blobless clone/fetch *)
+; only_branch: bool (** enables [--single-branch] and [--no-tags] *)
 }
 
 (** git's default configuration *)

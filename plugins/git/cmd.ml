@@ -2,6 +2,7 @@ open Lwt.Infix
 
 type clone_config =
 { filter: [`Blobless] option
+; only_branch: bool
 }
 
 module Metrics = struct
@@ -61,7 +62,8 @@ let git ~cancellable ~job ?cwd ?config args =
 let git_clone ~clone_config ~cancellable ~job ~src dst =
     Prometheus.Counter.inc_one (Metrics.download_events "clone");
     let config = [ "protocol.file.allow=always" ] in
-    let filters = [] in
+    let filters = if clone_config.only_branch then ["--single-branch"; "--no-tags"] else []
+    in
     let filters = match clone_config.filter with
       | None -> filters
       | Some `Blobless -> "--filter=blob:none" :: filters

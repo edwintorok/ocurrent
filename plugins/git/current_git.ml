@@ -14,11 +14,12 @@ let ( >>!= ) x f =
 
 type clone_config = Cmd.clone_config =
 { filter: [`Blobless] option
+; only_branch: bool
 }
 
-let empty_config = {filter = None}
+let empty_config = {filter = None; only_branch = false}
 
-let fast_config = { filter = Some `Blobless}
+let fast_config = { filter = Some `Blobless; only_branch = true;}
 
 (* for backwards compatibility do not enable these by default yet *)
 let default_config = empty_config
