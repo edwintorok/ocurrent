@@ -45,7 +45,7 @@ module Fetch = struct
     (* Ensure we have a local clone of the repository. *)
     begin
       if Cmd.dir_exists local_repo then Lwt.return (Ok ())
-      else Cmd.git_clone ~clone_config ~cancellable:true ~job ~src:remote_repo local_repo
+      else Cmd.git_clone ~clone_config ~cancellable:true ~job ~src:remote_repo ~branch:gref local_repo
     end >>!= fun () ->
     let commit = { Commit.repo = local_repo; id = key } in
     (* Fetch the commit (if missing). *)
