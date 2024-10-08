@@ -50,6 +50,41 @@ module Commit_id : sig
   val digest : t -> string
 end
 
+(** A git tree hash identifies the actual contents of a repository.
+
+  It doesn't include commit messages or history, and should remain unchanged
+  over squashing or rewording commits.
+  This can be useful to avoid rebuilds when cleaning up commit history before
+  or during a PR review.
+
+  Although a git tree hash is independent of filesystem location,
+  a build that uses a git tree as input may embed the path in binaries that it produces,
+  and therefore we also include the repo path into {!type:Tree.t}.
+
+  Comparison and equality only look at the tree hash and ignore the repo though,
+  but {!val:digest} includes it.
+
+  Can be used either as a cache Key or cache Value too.
+ *)
+module Tree: sig
+  include Set.OrderedType
+
+  val v : repo:Fpath.t -> tree_hash:string -> t
+  (** [v ~repo ~tree_hash] creates a tree hash from [tree_hash]. *)
+
+  val tree_hash: t -> string
+  (** [tree_hash t] tree hash as a hexadecimal string *)
+
+  val repo: t -> Fpath.t
+  (** [repo t] is the repository containing [t]. *)
+
+  val pp: t Fmt.t
+  (** [pp ppf t] pretty prints the full tree hash of [t] *)
+
+  include Current_cache.S.WITH_MARSHAL with type t := t
+  include Current_cache.S.WITH_DIGEST with type t := t
+end
+
 module Commit : sig
   include Set.OrderedType
 
@@ -65,12 +100,17 @@ module Commit : sig
 
   val marshal : t -> string
   val unmarshal : string -> t
+
 end
+
 
 val clone : ?clone_config:clone_config -> schedule:Current_cache.Schedule.t -> ?gref:string -> string -> Commit.t Current.t
 (** [clone ?clone_config ~schedule ~gref uri] evaluates to the head commit of [uri]'s [gref] branch (default: "master"). *)
 
 val fetch : ?clone_config:clone_config -> Commit_id.t Current.t -> Commit.t Current.t
+
+val tree_hash: Commit.t Current.t -> Tree.t Current.t
+(** [tree_hash commit] return the tree hash given a commit hash (cached). *)
 
 val with_checkout :
   ?pool:unit Current.Pool.t ->

@@ -92,6 +92,15 @@ let clone ?(clone_config=default_config) ~schedule ?(gref="master") repo =
   let> () = Current.return () in
   Clone_cache.get ~schedule clone_config { Clone.Key.repo; gref }
 
+module Tree_cache = Current_cache.Make(Tree)
+
+let tree_hash  commit =
+  Current.component "%s" Tree.id |>
+  let> commit = commit in
+  Tree_cache.get No_context commit
+
+module Tree = Tree.Value
+
 let with_checkout ?pool ~job commit fn =
   let { Commit.repo; id } = commit in
   let short_hash = Astring.String.with_range ~len:8 id.Commit_id.hash in

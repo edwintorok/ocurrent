@@ -63,7 +63,6 @@ let git ~cancellable ~job ?cwd ?config args =
     Cf: https://git-scm.com/docs/git-config#Documentation/git-config.txt-protocolallow *)
 let git_clone ~clone_config ~cancellable ~job ~src ~branch dst =
     Prometheus.Counter.inc_one (Metrics.download_events "clone");
-    Format.eprintf ":::clone_config: %a@." Yojson.Safe.pp (clone_config_to_yojson clone_config);
     let config = [ "protocol.file.allow=always" ] in
     let filters = if clone_config.only_branch then ["--single-branch"; "--branch"; branch; "--no-tags"] else []
     in
