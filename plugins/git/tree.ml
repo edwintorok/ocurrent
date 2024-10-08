@@ -24,7 +24,7 @@ module Value = struct
 
   let pp = Fmt.using tree_hash Fmt.string
 
-  let digest t = Fmt.str "%s %s" (Fpath.to_string t.repo) t.tree_hash
+  let digest t = t.tree_hash
 
   let marshal t = t |> to_yojson |> Yojson.Safe.to_string
 

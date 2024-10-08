@@ -61,8 +61,7 @@ end
   a build that uses a git tree as input may embed the path in binaries that it produces,
   and therefore we also include the repo path into {!type:Tree.t}.
 
-  Comparison and equality only look at the tree hash and ignore the repo though,
-  but {!val:digest} includes it.
+  Comparison, equality and digest only look at the tree hash and ignore the repo though.
 
   Can be used either as a cache Key or cache Value too.
  *)
