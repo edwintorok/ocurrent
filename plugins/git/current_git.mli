@@ -68,14 +68,17 @@ end
 module Tree: sig
   include Set.OrderedType
 
-  val v : repo:Fpath.t -> tree_hash:string -> t
-  (** [v ~repo ~tree_hash] creates a tree hash from [tree_hash]. *)
+  val v : commit:Commit.t -> tree_hash:string -> t
+  (** [v ~commit ~tree_hash] creates a tree hash from [tree_hash].
+    [commit] is stored as a convenience, so that [Tree.t] can be used
+    as an input to a pipeline step.
+   *)
 
   val tree_hash: t -> string
   (** [tree_hash t] tree hash as a hexadecimal string *)
 
-  val repo: t -> Fpath.t
-  (** [repo t] is the repository containing [t]. *)
+  val commit: t -> Commit.t
+  (** [commit t] is the commit with tree hash [t]. *)
 
   val pp: t Fmt.t
   (** [pp ppf t] pretty prints the full tree hash of [t] *)

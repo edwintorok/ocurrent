@@ -8,13 +8,11 @@ module Key = struct
 end
 
 module Value = struct
-  open Commit
+  type t = { commit: Commit.t; tree_hash: string } [@@deriving yojson]
 
-  type t = { repo: Fpath.t; tree_hash: string } [@@deriving yojson]
+  let v ~commit ~tree_hash = {commit; tree_hash}
 
-  let v ~repo ~tree_hash = {repo = Fpath.to_dir_path repo; tree_hash}
-
-  let repo t = t.repo
+  let commit t = t.commit
 
   let tree_hash t = t.tree_hash
 
@@ -40,12 +38,13 @@ let build No_context job commit =
   let open Lwt.Syntax in
   let repo = Commit.repo commit
   and commitish = commit |> Commit.id |> Commit_id.hash in
-  Lwt_mutex.with_lock (Clone.repo_lock (Fpath.to_string repo)) @@ fun () ->
+  let repo_lock = repo |> Fpath.to_string |> Clone.repo_lock in
+  Lwt_mutex.with_lock repo_lock @@ fun () ->
   let* () = Current.Job.start job ~level:Current.Level.Harmless in
   let open Lwt_result.Syntax in
   (* we could append [./], but that would depend on where the current dir is. *)
   let+ tree_hash = Cmd.git_rev_parse ~cancellable:true ~job ~repo (commitish ^ ":") in
-  Value.v ~repo ~tree_hash
+  Value.v ~commit ~tree_hash
 
 let pp ppf key = Fmt.pf ppf "git rev-parse %a:" Commit.pp key
 
