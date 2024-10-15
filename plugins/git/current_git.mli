@@ -50,6 +50,24 @@ module Commit_id : sig
   val digest : t -> string
 end
 
+module Commit : sig
+  include Set.OrderedType
+
+  val v : repo:Fpath.t -> id:Commit_id.t -> t
+  val id : t -> Commit_id.t
+  val hash : t -> string
+  val equal : t -> t -> bool
+  val pp : t Fmt.t
+
+  val repo : t -> Fpath.t
+  val pp_short : t Fmt.t
+  (** [pp_short] shows just the start of the hash. *)
+
+  val marshal : t -> string
+  val unmarshal : string -> t
+
+end
+
 (** A git tree hash identifies the actual contents of a repository.
 
   It doesn't include commit messages or history, and should remain unchanged
@@ -85,24 +103,6 @@ module Tree: sig
 
   include Current_cache.S.WITH_MARSHAL with type t := t
   include Current_cache.S.WITH_DIGEST with type t := t
-end
-
-module Commit : sig
-  include Set.OrderedType
-
-  val v : repo:Fpath.t -> id:Commit_id.t -> t
-  val id : t -> Commit_id.t
-  val hash : t -> string
-  val equal : t -> t -> bool
-  val pp : t Fmt.t
-
-  val repo : t -> Fpath.t
-  val pp_short : t Fmt.t
-  (** [pp_short] shows just the start of the hash. *)
-
-  val marshal : t -> string
-  val unmarshal : string -> t
-
 end
 
 
